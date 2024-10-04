@@ -11,77 +11,65 @@
 # 
 
 import logging
-
+import time
+from programmingtheiot.cda.system.SystemPerformanceManager import SystemPerformanceManager
 from time import sleep
 
-logging.basicConfig(format = '%(asctime)s:%(name)s:%(levelname)s:%(message)s', level = logging.DEBUG)
+logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
 
-class ConstrainedDeviceApp():
-	"""
-	Definition of the ConstrainedDeviceApp class.
-	
-	"""
-	
-	def __init__(self):
-		"""
-		Initialization of class.
-		
-		@param path The name of the resource to apply to the URI.
-		"""
-		logging.info("Initializing CDA...")
-		
-		# TODO: implementation here
+class ConstrainedDeviceApp:
+    """
+    Definition of the ConstrainedDeviceApp class.
+    """
 
-	def startApp(self):
-		"""
-		Start the CDA. Calls startManager() on the device data manager instance.
-		
-		"""
-		logging.info("Starting CDA...")
-		
-		# TODO: implementation here
-		
-		logging.info("CDA started.")
+    def __init__(self):
+        """
+        Initialization of class.
+        """
+        logging.info("Initializing CDA...")
+        self.sysPerfManager = SystemPerformanceManager()
+        
+        # TODO: Load configuration logic here
 
-	def stopApp(self, code: int):
-		"""
-		Stop the CDA. Calls stopManager() on the device data manager instance.
-		
-		"""
-		logging.info("CDA stopping...")
-		
-		# TODO: implementation here
-		
-		logging.info("CDA stopped with exit code %s.", str(code))
-		
-	def parseArgs(self, args):
-		"""
-		Parse command line args.
-		
-		@param args The arguments to parse.
-		"""
-		logging.info("Parsing command line args...")
+    def startApp(self):
+        """
+        Start the CDA. Calls startManager() on the SystemPerformanceManager instance.
+        """
+        logging.info("Starting CDA...")
+        self.sysPerfManager.startManager()
+        logging.info("CDA started.")
 
+    def stopApp(self, code: int):
+        """
+        Stop the CDA. Calls stopManager() on the device data manager instance.
+        """
+        logging.info("CDA stopping...")
+        self.sysPerfManager.stopManager()
+        logging.info("CDA stopped with exit code %s.", str(code))
+        
+    def parseArgs(self, args):
+        """
+        Parse command line args.
+        """
+        logging.info("Parsing command line args...")
 
 def main():
-	"""
-	Main function definition for running client as application.
-	
-	Current implementation runs for 35 seconds then exits.
-	"""
-	cda = ConstrainedDeviceApp()
-	cda.startApp()
-	
-	# run for 10 seconds - this can be changed as needed
-	sleep(10)
-	
-	# optionally stop the app - this can be removed if needed
-	cda.stopApp(0)
+    """
+    Main function definition for running client as application.
+    Current implementation runs for 65 seconds then exits.
+    """
+    cda = ConstrainedDeviceApp()
+    cda.startApp()
+    
+    # Run for 65 seconds - this can be changed as needed
+    sleep(65)
+    
+    # Optionally stop the app - this can be removed if needed
+    cda.stopApp(0)
 
 if __name__ == '__main__':
-	"""
-	Attribute definition for when invoking as app via command line
-	
-	"""
-	main()
-	
+    """
+    Attribute definition for when invoking as app via command line
+    """
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+    main()
