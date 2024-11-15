@@ -42,7 +42,7 @@ class SensorAdapterManagerTest(unittest.TestCase):
 	def testStartAndStopManager(self):
 		self.sensorAdapterMgr.startManager()
 		
-		sleep(60)
+		sleep(20)
 		
 		self.sensorAdapterMgr.stopManager()
 

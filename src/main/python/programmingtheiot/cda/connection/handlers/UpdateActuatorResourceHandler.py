@@ -8,22 +8,48 @@
 # 
 
 import logging
+import aiocoap
+from aiocoap import Code
+from aiocoap.resource import Resource
 
 from programmingtheiot.common.IDataMessageListener import IDataMessageListener
-
 from programmingtheiot.data.DataUtil import DataUtil
 from programmingtheiot.data.ActuatorData import ActuatorData
 
-class UpdateActuatorResourceHandler():
-	"""
-	Standard resource that will handle an incoming actuation command,
-	and return the command response.
-	
-	NOTE: Your implementation will likely need to extend from the selected
-	CoAP library's resource base class.
-	
-	"""
+class UpdateActuatorResourceHandler(Resource):
+    def __init__(self, dataMsgListener: IDataMessageListener = None):
+        self.dataMsgListener = dataMsgListener
+        self.dataUtil = DataUtil()
+        logging.info("UpdateActuatorResourceHandler initialized")
 
-	def __init__(self, dataMsgListener: IDataMessageListener = None):
-		pass
+    async def render_put(self, request):
+        try:
+            logging.info(f"PUT request received with payload: {request.payload.decode()}")
+            
+            # Validate and convert payload to ActuatorData
+            actuatorCmdData = self.dataUtil.jsonToActuatorData(request.payload)
+            
+            # Create and return response
+            return self._createResponse(actuatorCmdData)
+        except Exception as e:
+            logging.warning(f"Failed to validate and convert actuator command: {e}")
+            return aiocoap.Message(code=Code.NOT_ACCEPTABLE)
+
+    def _createResponse(self, data: ActuatorData = None):
+        responseCode = Code.CHANGED
+        
+        # Process actuator command
+        actuatorResponseData = self.dataMsgListener.handleActuatorCommandMessage(data)
+        
+        if not actuatorResponseData:
+            actuatorResponseData = ActuatorData()
+            actuatorResponseData.updateData(data)
+            actuatorResponseData.setAsResponse()
+            actuatorResponseData.setStatusCode(-1)
+            
+            responseCode = Code.PRECONDITION_FAILED
+        
+        jsonData = self.dataUtil.actuatorDataToJson(actuatorResponseData)
+        return aiocoap.Message(code=responseCode, payload=jsonData.encode('ascii'))
+       
 		

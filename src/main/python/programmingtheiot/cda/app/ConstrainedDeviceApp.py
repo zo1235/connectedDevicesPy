@@ -12,8 +12,12 @@
 
 import logging
 import time
+import programmingtheiot.common.ConfigConst as ConfigConst
 from programmingtheiot.cda.system.SystemPerformanceManager import SystemPerformanceManager
 from time import sleep
+from programmingtheiot.common.ConfigUtil import ConfigUtil
+from programmingtheiot.cda.app.DeviceDataManager import DeviceDataManager
+
 
 logging.basicConfig(format='%(asctime)s:%(name)s:%(levelname)s:%(message)s', level=logging.DEBUG)
 
@@ -27,7 +31,8 @@ class ConstrainedDeviceApp:
         Initialization of class.
         """
         logging.info("Initializing CDA...")
-        self.sysPerfManager = SystemPerformanceManager()
+        
+        self.dataMgr = DeviceDataManager()
         
         # TODO: Load configuration logic here
 
@@ -36,7 +41,9 @@ class ConstrainedDeviceApp:
         Start the CDA. Calls startManager() on the SystemPerformanceManager instance.
         """
         logging.info("Starting CDA...")
-        self.sysPerfManager.startManager()
+        
+        self.dataMgr.startManager()
+        
         logging.info("CDA started.")
 
     def stopApp(self, code: int):
@@ -44,7 +51,9 @@ class ConstrainedDeviceApp:
         Stop the CDA. Calls stopManager() on the device data manager instance.
         """
         logging.info("CDA stopping...")
-        self.sysPerfManager.stopManager()
+        
+        self.dataMgr.stopManager()
+        
         logging.info("CDA stopped with exit code %s.", str(code))
         
     def parseArgs(self, args):
@@ -61,11 +70,16 @@ def main():
     cda = ConstrainedDeviceApp()
     cda.startApp()
     
-    # Run for 65 seconds - this can be changed as needed
-    sleep(65)
+    runForever = ConfigUtil().getBoolean(ConfigConst.CONSTRAINED_DEVICE, ConfigConst.RUN_FOREVER_KEY)
     
-    # Optionally stop the app - this can be removed if needed
-    cda.stopApp(0)
+    if runForever:
+        while (True):
+            sleep(5)
+            
+    else:
+        # TODO: Make the '65' value configurable
+        sleep(65)
+        cda.stopApp(0)
 
 if __name__ == '__main__':
     """

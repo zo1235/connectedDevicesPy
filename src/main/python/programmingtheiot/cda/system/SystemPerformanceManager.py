@@ -6,6 +6,30 @@ from programmingtheiot.common.ConfigUtil import ConfigUtil
 from programmingtheiot.cda.system.SystemCpuUtilTask import SystemCpuUtilTask
 from programmingtheiot.cda.system.SystemMemUtilTask import SystemMemUtilTask
 
+# Import SystemPerformanceData if it exists, or define it as a placeholder
+try:
+    from programmingtheiot.data.SystemPerformanceData import SystemPerformanceData
+except ImportError:
+    class SystemPerformanceData:
+        def __init__(self):
+            self.locationID = None
+            self.cpuUtilization = 0.0
+            self.memoryUtilization = 0.0
+        
+        def setLocationID(self, locationID):
+            self.locationID = locationID
+        
+        def setCpuUtilization(self, cpuUtilization):
+            self.cpuUtilization = cpuUtilization
+        
+        def setMemoryUtilization(self, memoryUtilization):
+            self.memoryUtilization = memoryUtilization
+
+# Define IDataMessageListener if it's not already defined
+class IDataMessageListener:
+    def handleSystemPerformanceMessage(self, data):
+        pass
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(name)s:%(levelname)s:%(message)s')
 
@@ -42,13 +66,24 @@ class SystemPerformanceManager(object):
         self.memUtilTask = SystemMemUtilTask()
     
     def handleTelemetry(self):
-        cpuUtilPct = self.cpuUtilTask.getTelemetryValue()
-        memUtilPct = self.memUtilTask.getTelemetryValue()
-        logging.debug('CPU utilization is %s percent, and memory utilization is %s percent.', str(cpuUtilPct), str(memUtilPct))
+        self.cpuUtilPct = self.cpuUtilTask.getTelemetryValue()
+        self.memUtilPct = self.memUtilTask.getTelemetryValue()
         
-    def setDataMessageListener(self, listener): 
-        self.dataMsgListener = listener
-        logging.info("Data message listener set.")
+        logging.debug('CPU utilization is %s percent, and memory utilization is %s percent.', str(self.cpuUtilPct), str(self.memUtilPct))
+        
+        sysPerfData = SystemPerformanceData()
+        sysPerfData.setLocationID(self.locationID)
+        sysPerfData.setCpuUtilization(self.cpuUtilPct)
+        sysPerfData.setMemoryUtilization(self.memUtilPct)
+        
+        if self.dataMsgListener:
+            self.dataMsgListener.handleSystemPerformanceMessage(data = sysPerfData)
+    
+    def setDataMessageListener(self, listener: IDataMessageListener) -> bool:
+        if listener:
+            self.dataMsgListener = listener
+            return True
+        return False
     
     def startManager(self):
         logging.info("Starting SystemPerformanceManager...")
