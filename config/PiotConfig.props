@@ -18,7 +18,7 @@ port           = 1883
 securePort     = 8883
 defaultQoS     = 0
 keepAlive      = 60
-enableAuth     = False
+enableAuth     = True
 enableCrypt    = False
  
 #
@@ -26,7 +26,7 @@ enableCrypt    = False
 #
 [Coap.GatewayService]
 credFile       = ./cred/PiotCoapCred.props
-certFile       = ./cert/PiotCoapLocalCertFile.pem
+certFile       = /home/zohera/programmingtheiot/mqtt/server.crt
 host           = localhost
 port           = 5683
 securePort     = 5684
@@ -38,13 +38,13 @@ enableCrypt    = False
 #
 [ConstrainedDevice]
 deviceLocationID = constraineddevice001
-enableEmulator   = False
+enableEmulator   = True
 enableSenseHAT   = False    # Disable SenseHAT
 enableSimulator = True
 # Enable simulator
-enableMqttClient = True
-enableCoapServer = True
-enableCoapClient = True
+enableMqttClient = False
+enableCoapServer = False
+enableCoapClient = False
 enableSystemPerformance = True
 enableSensing    = True
 enableLogging    = True

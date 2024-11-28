@@ -84,12 +84,20 @@ class DeviceDataManager(IDataMessageListener):
         # Implement caching logic here
         return None
     
-    def handleActuatorCommandMessage(self, data: ActuatorData = None) -> ActuatorData:
+    def handleActuatorCommandMessage(self, data: ActuatorData) -> ActuatorData:
         if data is not None:
             logging.info("Processing actuator command message: %s", data)
             return self.actuatorAdapterMgr.sendActuatorCommand(data)
         else:
             logging.warning("Incoming actuator command is invalid (null). Ignoring.")
+            return None
+        if data:
+            logging.info("Processing actuator command message.")
+        
+        # TODO: add further validation before sending the command
+            return self.actuatorAdapterMgr.sendActuatorCommand(data)
+        else:
+            logging.warning("Received invalid ActuatorData command message. Ignoring.")
             return None
     
     def handleActuatorCommandResponse(self, data: ActuatorData = None) -> bool:
@@ -115,10 +123,40 @@ class DeviceDataManager(IDataMessageListener):
         else:
             logging.warning("Incoming sensor data is invalid (null). Ignoring.")
             return False
+        if data:
+            logging.info("Incoming sensor data received (from sensor manager): " + str(data))
+            
+            # Optionally handle analytics
+            self._handleSensorDataAnalysis(data)
+            
+            # Convert `SensorData` to JSON
+            jsonData = DataUtil().sensorDataToJson(data=data)
+            
+            # Send to GDA using the appropriate protocol
+            self._handleUpstreamTransmission(resource=ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, msg=jsonData)
+            
+            return True
+        else:
+            logging.warning("Incoming sensor data is invalid (null). Ignoring.")
+            return False
+
     
     def handleSystemPerformanceMessage(self, data: SystemPerformanceData = None) -> bool:
         if data:
             logging.debug("Incoming system performance message received: %s", data)
+            return True
+        else:
+            logging.warning("Incoming system performance data is invalid (null). Ignoring.")
+            return False
+        if data:
+            logging.info("Incoming system performance data received: " + str(data))
+            
+            # Convert `SystemPerformanceData` to JSON
+            jsonData = DataUtil().systemPerformanceDataToJson(data=data)
+            
+            # Send to GDA using the appropriate protocol
+            self._handleUpstreamTransmission(resource=ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, msg=jsonData)
+            
             return True
         else:
             logging.warning("Incoming system performance data is invalid (null). Ignoring.")
@@ -173,5 +211,20 @@ class DeviceDataManager(IDataMessageListener):
                 ad.setCommand(ConfigConst.COMMAND_OFF)
             self.handleActuatorCommandMessage(ad)
         
-    def _handleUpstreamTransmission(self, resourceName: ResourceNameEnum, msg: str):
-        pass
+    def _handleUpstreamTransmission(self, resource: ResourceNameEnum = None, msg: str = None):
+        logging.info("Upstream transmission invoked. Checking communication's integration.")
+        
+        # Use MQTT if enabled
+        if self.mqttClient:
+            if self.mqttClient.publishMessage(resource=resource, msg=msg):
+                logging.debug("Published incoming data to resource (MQTT): %s", str(resource))
+            else:
+                logging.warning("Failed to publish incoming data to resource (MQTT): %s", str(resource))
+        
+        # Use CoAP if enabled
+        if self.coapClient:
+            if self.coapClient.sendPutRequest(resource=resource, payload=msg):
+                logging.debug("Put incoming message data to resource (CoAP): %s", str(resource))
+            else:
+                logging.warning("Failed to put incoming message data to resource (CoAP): %s", str(resource))
+
